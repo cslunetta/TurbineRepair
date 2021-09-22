@@ -9,9 +9,10 @@ REST APIs are often described using an OpenAPI definition. This file contains in
 
 In this tutorial, you learn how to:
 
-Create a serverless function project in Visual Studio
-Test function APIs locally using built-in OpenAPI functionality
-Publish project to a function app in Azure with API Management integration
-Get the access key for the function and set it in API Management
-Download the OpenAPI definition file
+- Create a serverless function project in Visual Studio
+- Test function APIs locally using built-in OpenAPI functionality
+- Publish project to a function app in Azure with API Management integration
+- Get the access key for the function and set it in API Management
+- Download the OpenAPI definition file
+
 The serverless function you create provides an API that lets you determine whether an emergency repair on a wind turbine is cost-effective. Because both the function app and API Management instance you create use consumption plans, your cost for completing this tutorial is minimal.
