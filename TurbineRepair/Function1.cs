@@ -20,28 +20,49 @@ namespace TurbineRepair
         const double turbineCost = 100;
 
         [FunctionName("TurbineRepair")]
-        [OpenApiOperation(operationId: "Run", tags: new[] { "name" })]
+        [OpenApiOperation(operationId: "Run")]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "code", In = OpenApiSecurityLocationType.Query)]
-        [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The **Name** parameter")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "text/plain", bodyType: typeof(string), Description = "The OK response")]
+        [OpenApiRequestBody("application/json", typeof(RequestBodyModel), Description = "JSON request body containing { hours, capacity }")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(string), Description = "The OK response message containing a JSON result")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
-
+            // Get request body data
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            int? capacity = data?.capacity;
+            int? hours = data?.hours;
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+            // Return bad request if capactiy or hours are not passed in
+            if (capacity == null || hours == null)
+                return new BadRequestObjectResult("Please pass capacity and hours in the request body");
 
-            return new OkObjectResult(responseMessage);
+            // Formulas to calculate revenue and cost
+            double? revenueOpportunity = capacity * revenuePerKW * 24;
+            double? costToFix = (hours * technicianCost) + turbineCost;    
+            string repairTurbine = revenueOpportunity > costToFix
+                ? "Yes"
+                : "No";
+
+            return new OkObjectResult(new
+            {
+                message = repairTurbine,
+                revenueOpportunity = $"${revenueOpportunity}",
+                costToFix = $"${costToFix}"
+            });
         }
+    }
+
+    /// <summary>
+    /// Model for what a request body should contain.
+    /// </summary>
+    public class RequestBodyModel
+    {
+        public int Hours { get; set; }
+        public int Capacity { get; set; }
     }
 }
 
